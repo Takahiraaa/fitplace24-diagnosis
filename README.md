@@ -1,0 +1,1 @@
+# fitplace24-diagnosis
