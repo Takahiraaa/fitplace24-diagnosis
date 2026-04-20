@@ -1,0 +1,818 @@
+
+
+
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>フィットネスタイプ診断 | FIT PLACE24</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #f5f5f0;
+    --accent: #e8ff00;
+    --accent2: #ff4d1c;
+    --gray: #1a1a1a;
+    --gray2: #2a2a2a;
+    --text-muted: #888;
+  }
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+font-family: ‘Noto Sans JP’, sans-serif;
+background: var(–black);
+color: var(–white);
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* NOISE TEXTURE */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 256 256’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘noise’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23noise)’ opacity=‘0.04’/%3E%3C/svg%3E”);
+pointer-events: none;
+z-index: 1000;
+opacity: 0.5;
+}
+
+.container {
+max-width: 640px;
+margin: 0 auto;
+padding: 0 20px;
+position: relative;
+}
+
+/* HEADER */
+header {
+padding: 32px 20px 24px;
+text-align: center;
+position: relative;
+}
+
+.logo-badge {
+display: inline-block;
+border: 2px solid var(–accent);
+color: var(–accent);
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 13px;
+letter-spacing: 3px;
+padding: 4px 12px;
+margin-bottom: 20px;
+}
+
+header h1 {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: clamp(42px, 10vw, 72px);
+letter-spacing: 4px;
+line-height: 0.9;
+color: var(–white);
+}
+
+header h1 span {
+color: var(–accent);
+display: block;
+}
+
+header p {
+font-size: 13px;
+color: var(–text-muted);
+margin-top: 14px;
+letter-spacing: 1px;
+font-weight: 300;
+}
+
+/* PROGRESS */
+.progress-wrap {
+padding: 0 20px;
+margin-bottom: 32px;
+}
+
+.progress-info {
+display: flex;
+justify-content: space-between;
+font-size: 11px;
+color: var(–text-muted);
+margin-bottom: 8px;
+letter-spacing: 1px;
+}
+
+.progress-bar {
+height: 3px;
+background: var(–gray2);
+position: relative;
+overflow: hidden;
+}
+
+.progress-fill {
+height: 100%;
+background: var(–accent);
+transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+position: relative;
+}
+
+.progress-fill::after {
+content: ‘’;
+position: absolute;
+right: 0;
+top: -3px;
+width: 9px;
+height: 9px;
+background: var(–accent);
+border-radius: 50%;
+}
+
+/* QUESTION CARD */
+.screen { display: none; }
+.screen.active { display: block; animation: fadeSlide 0.4s ease; }
+
+@keyframes fadeSlide {
+from { opacity: 0; transform: translateY(16px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.question-card {
+background: var(–gray);
+border: 1px solid #333;
+border-radius: 2px;
+padding: 36px 28px;
+margin: 0 20px 24px;
+position: relative;
+overflow: hidden;
+}
+
+.question-card::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 3px;
+background: linear-gradient(90deg, var(–accent2), var(–accent));
+}
+
+.q-number {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 11px;
+letter-spacing: 3px;
+color: var(–accent);
+margin-bottom: 16px;
+}
+
+.q-text {
+font-size: 18px;
+font-weight: 700;
+line-height: 1.6;
+margin-bottom: 32px;
+letter-spacing: 0.5px;
+}
+
+.choices {
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+.choice-btn {
+background: var(–gray2);
+border: 1px solid #444;
+color: var(–white);
+padding: 16px 20px;
+text-align: left;
+cursor: pointer;
+font-family: ‘Noto Sans JP’, sans-serif;
+font-size: 14px;
+line-height: 1.5;
+border-radius: 2px;
+transition: all 0.2s;
+position: relative;
+overflow: hidden;
+font-weight: 400;
+}
+
+.choice-btn::before {
+content: ‘’;
+position: absolute;
+left: 0; top: 0; bottom: 0;
+width: 3px;
+background: var(–accent);
+transform: scaleY(0);
+transition: transform 0.2s;
+}
+
+.choice-btn:hover {
+border-color: var(–accent);
+background: #222;
+transform: translateX(4px);
+}
+
+.choice-btn:hover::before { transform: scaleY(1); }
+
+.choice-btn.selected {
+border-color: var(–accent);
+background: rgba(232, 255, 0, 0.08);
+}
+
+.choice-btn.selected::before { transform: scaleY(1); }
+
+/* LOADING */
+#screen-loading {
+text-align: center;
+padding: 80px 20px;
+}
+
+.loader-ring {
+width: 60px;
+height: 60px;
+border: 3px solid var(–gray2);
+border-top-color: var(–accent);
+border-radius: 50%;
+animation: spin 0.8s linear infinite;
+margin: 0 auto 24px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#screen-loading p {
+font-size: 13px;
+color: var(–text-muted);
+letter-spacing: 2px;
+font-weight: 300;
+}
+
+/* RESULT */
+#screen-result {
+padding: 0 20px 60px;
+}
+
+.result-header {
+text-align: center;
+padding: 32px 0 28px;
+border-bottom: 1px solid #333;
+margin-bottom: 28px;
+}
+
+.result-label {
+font-size: 11px;
+letter-spacing: 3px;
+color: var(–accent);
+font-family: ‘Bebas Neue’, sans-serif;
+margin-bottom: 8px;
+}
+
+.result-emoji {
+font-size: 56px;
+display: block;
+margin: 12px 0;
+animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes pop {
+from { transform: scale(0); opacity: 0; }
+to { transform: scale(1); opacity: 1; }
+}
+
+.result-type-name {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: clamp(36px, 9vw, 54px);
+letter-spacing: 3px;
+color: var(–white);
+line-height: 1;
+margin-bottom: 6px;
+}
+
+.result-section {
+background: var(–gray);
+border: 1px solid #333;
+border-radius: 2px;
+padding: 24px;
+margin-bottom: 16px;
+}
+
+.result-section h3 {
+font-size: 11px;
+letter-spacing: 2px;
+color: var(–accent2);
+font-weight: 700;
+margin-bottom: 12px;
+}
+
+.result-section p {
+font-size: 14px;
+line-height: 1.8;
+color: #ccc;
+font-weight: 300;
+}
+
+.rec-list {
+list-style: none;
+display: flex;
+flex-direction: column;
+gap: 10px;
+}
+
+.rec-list li {
+display: flex;
+align-items: flex-start;
+gap: 10px;
+font-size: 14px;
+color: #ccc;
+font-weight: 300;
+line-height: 1.6;
+}
+
+.rec-list li::before {
+content: ‘→’;
+color: var(–accent);
+font-weight: 700;
+flex-shrink: 0;
+margin-top: 1px;
+}
+
+.cta-box {
+background: linear-gradient(135deg, #1a1a00, #0a0a0a);
+border: 2px solid var(–accent);
+border-radius: 2px;
+padding: 28px 24px;
+margin-bottom: 20px;
+text-align: center;
+}
+
+.cta-box h3 {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 22px;
+letter-spacing: 2px;
+color: var(–accent);
+margin-bottom: 10px;
+}
+
+.cta-box p {
+font-size: 13px;
+color: var(–text-muted);
+line-height: 1.7;
+margin-bottom: 18px;
+font-weight: 300;
+}
+
+.cta-btn {
+display: inline-block;
+background: var(–accent);
+color: var(–black);
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 18px;
+letter-spacing: 2px;
+padding: 14px 36px;
+border: none;
+cursor: pointer;
+border-radius: 2px;
+text-decoration: none;
+transition: all 0.2s;
+width: 100%;
+}
+
+.cta-btn:hover {
+background: #fff;
+transform: translateY(-2px);
+box-shadow: 0 8px 24px rgba(232,255,0,0.2);
+}
+
+/* QR SECTION */
+.qr-section {
+text-align: center;
+padding: 28px 24px;
+background: var(–gray);
+border: 1px solid #333;
+border-radius: 2px;
+margin-bottom: 16px;
+}
+
+.qr-section h3 {
+font-size: 11px;
+letter-spacing: 2px;
+color: var(–text-muted);
+font-weight: 700;
+margin-bottom: 20px;
+}
+
+#qrcode {
+display: inline-block;
+background: white;
+padding: 12px;
+border-radius: 2px;
+margin-bottom: 14px;
+}
+
+.qr-section p {
+font-size: 12px;
+color: var(–text-muted);
+font-weight: 300;
+}
+
+/* RETRY */
+.retry-btn {
+display: block;
+width: 100%;
+background: transparent;
+border: 1px solid #444;
+color: var(–text-muted);
+font-family: ‘Noto Sans JP’, sans-serif;
+font-size: 13px;
+padding: 14px;
+cursor: pointer;
+border-radius: 2px;
+transition: all 0.2s;
+letter-spacing: 1px;
+}
+
+.retry-btn:hover {
+border-color: #888;
+color: var(–white);
+}
+
+/* START SCREEN */
+#screen-start {
+padding: 20px 20px 60px;
+}
+
+.start-visual {
+height: 6px;
+background: linear-gradient(90deg, var(–accent2), var(–accent));
+margin-bottom: 36px;
+}
+
+.start-types {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 10px;
+margin-bottom: 36px;
+}
+
+.type-preview {
+background: var(–gray);
+border: 1px solid #333;
+border-radius: 2px;
+padding: 16px 14px;
+text-align: center;
+}
+
+.type-preview .emoji { font-size: 24px; display: block; margin-bottom: 8px; }
+.type-preview .name { font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+.type-preview .sub { font-size: 10px; color: var(–text-muted); margin-top: 4px; font-weight: 300; }
+
+.start-btn {
+display: block;
+width: 100%;
+background: var(–accent);
+color: var(–black);
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 22px;
+letter-spacing: 3px;
+padding: 18px;
+border: none;
+cursor: pointer;
+border-radius: 2px;
+transition: all 0.2s;
+margin-bottom: 14px;
+}
+
+.start-btn:hover {
+background: #fff;
+transform: translateY(-2px);
+box-shadow: 0 8px 24px rgba(232,255,0,0.25);
+}
+
+.start-note {
+text-align: center;
+font-size: 11px;
+color: var(–text-muted);
+letter-spacing: 1px;
+font-weight: 300;
+}
+
+/* ERROR */
+.error-box {
+background: rgba(255,77,28,0.1);
+border: 1px solid var(–accent2);
+border-radius: 2px;
+padding: 20px;
+margin: 20px;
+font-size: 13px;
+color: #ff9980;
+line-height: 1.7;
+}
+</style>
+
+</head>
+<body>
+
+<header>
+  <div class="logo-badge">FIT PLACE 24</div>
+  <h1>FITNESS<span>TYPE</span>診断</h1>
+  <p>あなたに合ったトレーニングスタイルを見つけよう</p>
+</header>
+
+<!-- START -->
+
+<div id="screen-start" class="screen active">
+  <div class="start-visual"></div>
+  <div class="start-types">
+    <div class="type-preview"><span class="emoji">🔥</span><div class="name">ガチ勢</div><div class="sub">高強度トレーニー</div></div>
+    <div class="type-preview"><span class="emoji">💪</span><div class="name">コツコツ型</div><div class="sub">習慣化マスター</div></div>
+    <div class="type-preview"><span class="emoji">😅</span><div class="name">幽霊予備軍</div><div class="sub">モチベ再点火が必要</div></div>
+    <div class="type-preview"><span class="emoji">🎯</span><div class="name">目標明確型</div><div class="sub">結果にコミット</div></div>
+    <div class="type-preview"><span class="emoji">🧘</span><div class="name">健康維持型</div><div class="sub">ゆるく長く続ける</div></div>
+    <div class="type-preview"><span class="emoji">🆕</span><div class="name">迷子型</div><div class="sub">何すればいいか不明</div></div>
+  </div>
+  <button class="start-btn" onclick="startQuiz()">診断スタート →</button>
+  <p class="start-note">全6問 ／ 所要時間 約2分</p>
+</div>
+
+<!-- QUESTIONS -->
+
+<div id="screen-quiz" class="screen">
+  <div class="progress-wrap">
+    <div class="progress-info">
+      <span id="q-progress-text">QUESTION 1 / 6</span>
+      <span id="q-progress-pct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+  <div id="question-area"></div>
+</div>
+
+<!-- LOADING -->
+
+<div id="screen-loading" class="screen">
+  <div class="loader-ring"></div>
+  <p>ANALYZING YOUR TYPE...</p>
+</div>
+
+<!-- RESULT -->
+
+<div id="screen-result" class="screen">
+  <div class="result-header">
+    <div class="result-label">YOUR FITNESS TYPE</div>
+    <span class="result-emoji" id="result-emoji"></span>
+    <div class="result-type-name" id="result-type-name"></div>
+  </div>
+
+  <div class="result-section">
+    <h3>TYPE PROFILE</h3>
+    <p id="result-description"></p>
+  </div>
+
+  <div class="result-section">
+    <h3>RECOMMENDED FOR YOU</h3>
+    <ul class="rec-list" id="result-recs"></ul>
+  </div>
+
+  <div class="cta-box">
+    <h3 id="cta-title">パーソナル体験を予約する</h3>
+    <p id="cta-body">あなたのタイプに合わせたパーソナルトレーニング体験（初回無料）でさらに効果アップ。まずはスタッフに声をかけてください。</p>
+    <button class="cta-btn" onclick="alert('スタッフへお声がけください！')">スタッフに声をかける</button>
+  </div>
+
+  <div class="qr-section">
+    <h3>この診断をシェア / QRコード</h3>
+    <div id="qrcode"></div>
+    <p>QRコードをスキャンして診断を試そう</p>
+  </div>
+
+<button class="retry-btn" onclick="restartQuiz()">↺ もう一度診断する</button>
+
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    text: "今月、ジムに来た回数はどのくらいですか？",
+    choices: [
+      { text: "週4回以上、ほぼ毎日来ている", scores: { gachi: 3, kotsu: 1, yurei: 0, mokuhyo: 2, kenkou: 1, mayoi: 0 } },
+      { text: "週2〜3回は来ている", scores: { gachi: 1, kotsu: 3, yurei: 0, mokuhyo: 1, kenkou: 2, mayoi: 1 } },
+      { text: "月に数回程度…", scores: { gachi: 0, kotsu: 1, yurei: 3, mokuhyo: 0, kenkou: 1, mayoi: 2 } },
+      { text: "正直、最近あまり来れていない", scores: { gachi: 0, kotsu: 0, yurei: 3, mokuhyo: 0, kenkou: 0, mayoi: 2 } },
+    ]
+  },
+  {
+    text: "ジムに来るとき、トレーニングメニューは決まっていますか？",
+    choices: [
+      { text: "完全に決まっている。毎回記録もつけている", scores: { gachi: 3, kotsu: 1, yurei: 0, mokuhyo: 3, kenkou: 0, mayoi: 0 } },
+      { text: "大体のルーティンはある", scores: { gachi: 1, kotsu: 3, yurei: 0, mokuhyo: 1, kenkou: 2, mayoi: 0 } },
+      { text: "来てから考える", scores: { gachi: 0, kotsu: 1, yurei: 1, mokuhyo: 0, kenkou: 1, mayoi: 3 } },
+      { text: "何をすればいいかよくわからない", scores: { gachi: 0, kotsu: 0, yurei: 2, mokuhyo: 0, kenkou: 1, mayoi: 3 } },
+    ]
+  },
+  {
+    text: "今、ジムに通う一番の目的は何ですか？",
+    choices: [
+      { text: "筋肉をとにかくつけたい / 身体を極めたい", scores: { gachi: 3, kotsu: 1, yurei: 0, mokuhyo: 2, kenkou: 0, mayoi: 0 } },
+      { text: "ダイエット・体型改善", scores: { gachi: 1, kotsu: 2, yurei: 0, mokuhyo: 3, kenkou: 1, mayoi: 1 } },
+      { text: "健康維持・体力低下を防ぎたい", scores: { gachi: 0, kotsu: 2, yurei: 1, mokuhyo: 0, kenkou: 3, mayoi: 1 } },
+      { text: "なんとなく、せっかく会員だから", scores: { gachi: 0, kotsu: 0, yurei: 3, mokuhyo: 0, kenkou: 1, mayoi: 2 } },
+    ]
+  },
+  {
+    text: "トレーニングのモチベーションが下がるのはどんなとき？",
+    choices: [
+      { text: "あまり下がらない。鍛えることが好きだから", scores: { gachi: 3, kotsu: 2, yurei: 0, mokuhyo: 2, kenkou: 1, mayoi: 0 } },
+      { text: "忙しくて来れない日が続いたとき", scores: { gachi: 1, kotsu: 2, yurei: 2, mokuhyo: 1, kenkou: 2, mayoi: 1 } },
+      { text: "成果が見えないとき", scores: { gachi: 1, kotsu: 1, yurei: 2, mokuhyo: 3, kenkou: 1, mayoi: 2 } },
+      { text: "そもそも最初からモチベが高くない", scores: { gachi: 0, kotsu: 0, yurei: 3, mokuhyo: 0, kenkou: 1, mayoi: 3 } },
+    ]
+  },
+  {
+    text: "パーソナルトレーニングに対するイメージは？",
+    choices: [
+      { text: "すでに活用している or 積極的に使いたい", scores: { gachi: 3, kotsu: 1, yurei: 0, mokuhyo: 3, kenkou: 1, mayoi: 1 } },
+      { text: "興味はあるが、まだ試していない", scores: { gachi: 1, kotsu: 2, yurei: 2, mokuhyo: 2, kenkou: 2, mayoi: 3 } },
+      { text: "自分でできるので特に必要は感じない", scores: { gachi: 2, kotsu: 3, yurei: 0, mokuhyo: 1, kenkou: 2, mayoi: 0 } },
+      { text: "よくわからない・難しそう", scores: { gachi: 0, kotsu: 0, yurei: 2, mokuhyo: 0, kenkou: 1, mayoi: 3 } },
+    ]
+  },
+  {
+    text: "半年後、どんな自分でいたいですか？",
+    choices: [
+      { text: "見た目が大きく変わっている", scores: { gachi: 2, kotsu: 1, yurei: 0, mokuhyo: 3, kenkou: 0, mayoi: 1 } },
+      { text: "ジムが生活の一部になっている", scores: { gachi: 2, kotsu: 3, yurei: 1, mokuhyo: 1, kenkou: 2, mayoi: 1 } },
+      { text: "体の調子がいい状態を保てている", scores: { gachi: 0, kotsu: 2, yurei: 1, mokuhyo: 0, kenkou: 3, mayoi: 1 } },
+      { text: "正直、あまりイメージできていない", scores: { gachi: 0, kotsu: 0, yurei: 3, mokuhyo: 0, kenkou: 1, mayoi: 3 } },
+    ]
+  }
+];
+
+const TYPES = {
+  gachi: {
+    emoji: "🔥",
+    name: "ガチ勢",
+    description: "トレーニングへの熱量が高く、頻度・強度ともにトップクラス。記録を伸ばすことに喜びを感じるタイプです。自分を追い込める環境を活かして、さらなる高みを目指しましょう。",
+    recs: [
+      "パーソナルトレーニングで限界突破のプログラムを組む",
+      "記録管理アプリやトレーニングログの活用",
+      "スタッフへ高強度メニューの相談",
+      "24H設備をフル活用した分割法トレーニング"
+    ],
+    cta_title: "さらに上を目指すなら",
+    cta_body: "パーソナルトレーニングで、あなたの限界を一緒に更新しましょう。スタッフに声をかけてください。"
+  },
+  kotsu: {
+    emoji: "💪",
+    name: "コツコツ型",
+    description: "無理なく継続できる習慣力を持つ優秀なタイプ。地道な積み重ねで確実に身体が変わっていきます。今のペースを崩さず、少しずつ負荷を上げていくのが成功の鍵です。",
+    recs: [
+      "定期的なボディチェックで変化を可視化する",
+      "月に1回のパーソナルでメニューを更新",
+      "同じ時間帯に来館するルーティン化",
+      "有酸素＋筋トレのバランス調整"
+    ],
+    cta_title: "継続力をさらに活かすには",
+    cta_body: "月1回のパーソナルセッションで、メニューをアップデートしてみませんか？スタッフにご相談ください。"
+  },
+  yurei: {
+    emoji: "😅",
+    name: "幽霊予備軍",
+    description: "来館頻度が落ちてきているサインが出ています。でも、それに気づいているあなたはまだ大丈夫。小さなきっかけで習慣は取り戻せます。まずは週1回来ることを目標にしてみましょう。",
+    recs: [
+      "「週1回必ず来る」の小さな目標を設定",
+      "パーソナル体験で来館のきっかけをつくる",
+      "スタッフへ不安・悩みを相談する",
+      "友人や家族と一緒に来館してみる"
+    ],
+    cta_title: "今こそ再スタートのタイミング",
+    cta_body: "初回パーソナルトレーニング体験を活用して、再スタートのきっかけにしてみませんか？スタッフに声をかけてください。"
+  },
+  mokuhyo: {
+    emoji: "🎯",
+    name: "目標明確型",
+    description: "ゴールが明確なので、あとは正しいアプローチが揃えば結果が出ます。独学だけでは遠回りになることも。プロの知見を借りながら、最短ルートで目標達成を狙いましょう。",
+    recs: [
+      "目標達成のための専用プログラム設計",
+      "パーソナルトレーナーによる食事指導も活用",
+      "週単位での進捗チェック習慣をつける",
+      "目標到達の時期を逆算したスケジュール管理"
+    ],
+    cta_title: "目標達成を最速で",
+    cta_body: "目標が明確なあなたには、パーソナルトレーニングが最も効果的です。まずはスタッフへご相談ください。"
+  },
+  kenkou: {
+    emoji: "🧘",
+    name: "健康維持型",
+    description: "無理せず、長く続けることを大切にするスマートなタイプ。健康維持は一生続くテーマ。自分のペースを守りながら、身体の声に耳を傾けるトレーニングが向いています。",
+    recs: [
+      "ストレッチ・柔軟性向上メニューの導入",
+      "有酸素運動と軽負荷筋トレのバランス",
+      "疲労回復を意識したクールダウンの習慣化",
+      "スタッフへ身体の不調・悩みを気軽に相談"
+    ],
+    cta_title: "ゆるく続けるための最適解",
+    cta_body: "無理なく続けるためのメニューを一緒に考えます。スタッフにいつでも声をかけてください。"
+  },
+  mayoi: {
+    emoji: "🆕",
+    name: "迷子型",
+    description: "何をすればいいかわからないまま来館しているのは、とてももったいない状態。でも安心してください。適切なサポートがあれば、ジムは劇的に楽しくなります。まず一度スタッフに相談することが最優先です。",
+    recs: [
+      "パーソナル初回体験で自分に合ったメニューを知る",
+      "スタッフへ「何から始めればいい？」と気軽に聞く",
+      "マシンの正しい使い方レクチャーを受ける",
+      "シンプルな週3回のビギナープランからスタート"
+    ],
+    cta_title: "まず一歩、一緒に踏み出しましょう",
+    cta_body: "初回パーソナルトレーニング体験（無料）で、あなた専用のスタートプランを一緒に作ります。スタッフに声をかけてください！"
+  }
+};
+
+let currentQ = 0;
+let scores = { gachi: 0, kotsu: 0, yurei: 0, mokuhyo: 0, kenkou: 0, mayoi: 0 };
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startQuiz() {
+  currentQ = 0;
+  scores = { gachi: 0, kotsu: 0, yurei: 0, mokuhyo: 0, kenkou: 0, mayoi: 0 };
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[currentQ];
+  const pct = Math.round((currentQ / QUESTIONS.length) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('q-progress-text').textContent = `QUESTION ${currentQ + 1} / ${QUESTIONS.length}`;
+  document.getElementById('q-progress-pct').textContent = pct + '%';
+
+  const html = `
+    <div class="question-card">
+      <div class="q-number">Q${currentQ + 1}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="choices">
+        ${q.choices.map((c, i) => `
+          <button class="choice-btn" onclick="selectChoice(${i})">${c.text}</button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  document.getElementById('question-area').innerHTML = html;
+}
+
+function selectChoice(idx) {
+  const q = QUESTIONS[currentQ];
+  const chosen = q.choices[idx];
+  Object.keys(chosen.scores).forEach(k => { scores[k] += chosen.scores[k]; });
+
+  const btns = document.querySelectorAll('.choice-btn');
+  btns[idx].classList.add('selected');
+  btns.forEach(b => b.disabled = true);
+
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < QUESTIONS.length) {
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }, 400);
+}
+
+function showResult() {
+  showScreen('screen-loading');
+  setTimeout(() => {
+    const topType = Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
+    const t = TYPES[topType];
+
+    document.getElementById('result-emoji').textContent = t.emoji;
+    document.getElementById('result-type-name').textContent = t.name;
+    document.getElementById('result-description').textContent = t.description;
+
+    const recHtml = t.recs.map(r => `<li>${r}</li>`).join('');
+    document.getElementById('result-recs').innerHTML = recHtml;
+    document.getElementById('cta-title').textContent = t.cta_title;
+    document.getElementById('cta-body').textContent = t.cta_body;
+
+    // QR
+    document.getElementById('qrcode').innerHTML = '';
+    new QRCode(document.getElementById('qrcode'), {
+      text: window.location.href,
+      width: 140,
+      height: 140,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+    });
+
+    showScreen('screen-result');
+  }, 1800);
+}
+
+function restartQuiz() {
+  startQuiz();
+}
+</script>
+
+</body>
+</html>
